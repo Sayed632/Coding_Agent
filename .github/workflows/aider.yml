@@ -8,10 +8,13 @@ on:
 
 jobs:
   aider:
-    # Restrict execution to your username only for safety
+    # Handles both issue creation (github.event.issue.body) AND comments (github.event.comment.body)
     if: >-
-      github.actor == 'Sayed632' &&
-      (contains(github.event.issue.labels.*.name, 'aider') || startsWith(github.event.comment.body, 'aider:'))
+      github.actor == 'Sayed632' && (
+        startsWith(github.event.issue.body, 'aider:') ||
+        startsWith(github.event.comment.body, 'aider:') ||
+        contains(github.event.issue.labels.*.name, 'aider')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -39,8 +42,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          INSTRUCTION="${{ github.event.comment.body || github.event.issue.body }}"
-          CLEAN_PROMPT=$(echo "$INSTRUCTION" | sed 's/^aider://gi')
+          # Extract instruction from issue body or comment body
+          RAW_BODY="${{ github.event.comment.body || github.event.issue.body }}"
+          CLEAN_PROMPT=$(echo "$RAW_BODY" | sed 's/^aider://gi')
 
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
