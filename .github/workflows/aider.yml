@@ -60,13 +60,16 @@ jobs:
 
       - name: Run Aider Agent
         id: aider
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           set -e
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          RAW_BODY="${{ github.event.comment.body || github.event.issue.body }}"
-          CLEAN_PROMPT=$(echo "$RAW_BODY" | sed -E 's/^[Aa]ider:[[:space:]]*//')
+          RAW_BODY="${COMMENT_BODY:-$ISSUE_BODY}"
+          CLEAN_PROMPT=$(printf '%s' "$RAW_BODY" | sed -E 's/^[Aa]ider:[[:space:]]*//')
           IS_PR=$(gh issue view "$ISSUE_NUMBER" --json isPullRequest -q .isPullRequest 2>/dev/null || echo "false")
 
           if [ "$IS_PR" = "true" ]; then
